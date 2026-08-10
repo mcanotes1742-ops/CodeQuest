@@ -13,11 +13,7 @@ import {
   updateProgress,
   disqualifyUser,
 } from "@/lib/auth";
-import {
-  isSupabaseConfigured,
-  supabaseDisqualify,
-  supabaseUpdateProgress,
-} from "@/lib/supabase-auth";
+import { isSupabaseConfigured, supabaseDisqualify, supabaseUpdateProgress } from "@/lib/supabase-auth";
 import { resolveSession } from "@/lib/session";
 
 export default function LevelPage() {
@@ -32,9 +28,7 @@ export default function LevelPage() {
   const [loading, setLoading] = useState(false);
   const [shuffledLines, setShuffledLines] = useState<string[]>([]);
   const [arranged, setArranged] = useState<string[]>([]);
-  const [memoryPhase, setMemoryPhase] = useState<
-    "warning" | "show" | "question"
-  >("warning");
+  const [memoryPhase, setMemoryPhase] = useState<"warning" | "show" | "question">("warning");
   const [memoryTimer, setMemoryTimer] = useState(20);
   const [lockAnswers, setLockAnswers] = useState<Record<number, string>>({});
   // Continuous whole-game timer: base duration + start time + accumulated penalty
@@ -75,8 +69,7 @@ export default function LevelPage() {
 
       let blocked = session.status === "disqualified";
       try {
-        if (localStorage.getItem("cq_disqualified_" + session.userId) === "1")
-          blocked = true;
+        if (localStorage.getItem("cq_disqualified_" + session.userId) === "1") blocked = true;
       } catch {}
       if (blocked) {
         router.replace("/result?status=disqualified");
@@ -96,8 +89,7 @@ export default function LevelPage() {
         const raw = localStorage.getItem("cq_game_settings");
         if (raw) {
           const s = JSON.parse(raw);
-          if (typeof s.startingTimer === "number" && s.startingTimer > 0)
-            base = s.startingTimer;
+          if (typeof s.startingTimer === "number" && s.startingTimer > 0) base = s.startingTimer;
         }
       } catch {}
       setBaseDurationSec(base);
@@ -120,9 +112,7 @@ export default function LevelPage() {
             } else {
               const p = getUserProgress(uid);
               if (p && !p.startedAt) {
-                updateProgress(uid, {
-                  startedAt: new Date(startMs).toISOString(),
-                });
+                updateProgress(uid, { startedAt: new Date(startMs).toISOString() });
               } else if (p?.startedAt) {
                 startMs = new Date(p.startedAt).getTime();
               }
@@ -139,11 +129,7 @@ export default function LevelPage() {
   useEffect(() => {
     if (gameStartMs == null) return;
     const tick = () => {
-      const remaining = computeRemaining(
-        gameStartMs,
-        timePenaltySec,
-        baseDurationSec,
-      );
+      const remaining = computeRemaining(gameStartMs, timePenaltySec, baseDurationSec);
       setTimer(remaining);
       if (remaining <= 0) {
         // Time up → treat as fail / redirect
@@ -299,18 +285,14 @@ export default function LevelPage() {
       if (levelData.type === "riddle") {
         correct = ans.toLowerCase() === levelData.answer.toLowerCase();
       } else if (levelData.type === "output") {
-        correct =
-          ans === levelData.answer ||
-          ans.toLowerCase() === levelData.answer.toLowerCase();
+        correct = ans === levelData.answer || ans.toLowerCase() === levelData.answer.toLowerCase();
       } else if (levelData.type === "detective") {
         correct =
           ans.toLowerCase().includes(levelData.correctFix.toLowerCase()) ||
           (levelData.options?.some((o) => ans === o) ?? false);
       } else if (levelData.type === "logic") {
         correct = levelData.locks.every(
-          (l) =>
-            (lockAnswers[l.id] || "").trim().toLowerCase() ===
-            l.answer.toLowerCase(),
+          (l) => (lockAnswers[l.id] || "").trim().toLowerCase() === l.answer.toLowerCase()
         );
       } else if (levelData.type === "arrangement") {
         correct =
@@ -359,12 +341,8 @@ export default function LevelPage() {
   return (
     <main className="sky-bg min-h-screen py-8 px-4 no-select">
       <div className="max-w-4xl mx-auto mb-6 flex justify-between items-center quest-card-soft p-4">
-        <span className="text-cyan-400 font-display font-bold">
-          LEVEL {levelId}
-        </span>
-        <span
-          className={`font-mono text-xl ${timer < 60 ? "text-red-400 animate-pulse font-bold" : "text-amber-400 font-bold"}`}
-        >
+        <span className="text-cyan-400 font-display font-bold">LEVEL {levelId}</span>
+        <span className={`font-mono text-xl ${timer < 60 ? "text-red-400 animate-pulse font-bold" : "text-amber-400 font-bold"}`}>
           ⏱ {formatTime(timer)}
         </span>
       </div>
@@ -372,78 +350,41 @@ export default function LevelPage() {
       <div className="max-w-3xl mx-auto quest-card p-6 md:p-8">
         <AnimatePresence mode="wait">
           {levelData.type === "riddle" && (
-            <motion.div
-              key="riddle"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <h2 className="font-display text-xl text-purple-400 font-bold mb-4">
-                CODE RIDDLE
-              </h2>
-              <p className="text-lg text-slate-100 font-semibold mb-6">
-                {levelData.question}
-              </p>
+            <motion.div key="riddle" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <h2 className="font-display text-xl text-purple-400 font-bold mb-4">CODE RIDDLE</h2>
+              <p className="text-lg text-slate-100 font-semibold mb-6">{levelData.question}</p>
               <input
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
                 placeholder="Enter your answer..."
                 className="w-full bg-[#0a0e1a] border-2 border-purple-500/40 rounded-xl px-4 py-3 mb-4 text-slate-100 placeholder:text-slate-500 focus:border-purple-400 outline-none"
               />
-              <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className="btn-adventure px-8 py-3 text-base"
-              >
+              <button onClick={handleSubmit} disabled={loading} className="btn-adventure px-8 py-3 text-base">
                 SUBMIT
               </button>
             </motion.div>
           )}
 
           {levelData.type === "output" && (
-            <motion.div
-              key="output"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <h2 className="font-display text-xl text-orange-600 font-bold mb-4">
-                OUTPUT HUNT
-              </h2>
-              <p className="text-sm text-slate-600 font-medium mb-2">
-                Language: {levelData.language.toUpperCase()}
-              </p>
-              <pre className="code-block p-4 text-sm overflow-x-auto mb-4 text-green-300">
-                {levelData.code}
-              </pre>
+            <motion.div key="output" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <h2 className="font-display text-xl text-orange-600 font-bold mb-4">OUTPUT HUNT</h2>
+              <p className="text-sm text-slate-600 font-medium mb-2">Language: {levelData.language.toUpperCase()}</p>
+              <pre className="code-block p-4 text-sm overflow-x-auto mb-4 text-green-300">{levelData.code}</pre>
               <input
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
                 placeholder="Predict the output..."
                 className="w-full bg-[#0a0e1a] border-2 border-orange-200 rounded-xl px-4 py-3 mb-4 text-slate-900 placeholder:text-slate-400 focus:border-orange-400 outline-none"
               />
-              <button
-                onClick={handleSubmit}
-                className="btn-adventure px-8 py-3 text-base"
-              >
-                SUBMIT
-              </button>
+              <button onClick={handleSubmit} className="btn-adventure px-8 py-3 text-base">SUBMIT</button>
             </motion.div>
           )}
 
           {levelData.type === "detective" && (
-            <motion.div
-              key="detective"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <h2 className="font-display text-xl text-sky-300 font-bold mb-4">
-                CODE DETECTIVE
-              </h2>
-              <p className="text-slate-100 mb-3 font-medium">
-                {levelData.bugDescription}
-              </p>
-              <pre className="code-block p-4 text-sm overflow-x-auto mb-4 text-red-700">
-                {levelData.code}
-              </pre>
+            <motion.div key="detective" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <h2 className="font-display text-xl text-sky-300 font-bold mb-4">CODE DETECTIVE</h2>
+              <p className="text-slate-100 mb-3 font-medium">{levelData.bugDescription}</p>
+              <pre className="code-block p-4 text-sm overflow-x-auto mb-4 text-red-700">{levelData.code}</pre>
               {levelData.options ? (
                 <div className="space-y-2 mb-4">
                   {levelData.options.map((opt, i) => (
@@ -457,83 +398,44 @@ export default function LevelPage() {
                   ))}
                 </div>
               ) : (
-                <input
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  className="w-full bg-[#0a0e1a] border-2 border-slate-700 rounded-xl px-4 py-3 mb-4 text-slate-900 outline-none"
-                />
+                <input value={answer} onChange={(e) => setAnswer(e.target.value)} className="w-full bg-[#0a0e1a] border-2 border-slate-700 rounded-xl px-4 py-3 mb-4 text-slate-900 outline-none" />
               )}
-              <button
-                onClick={handleSubmit}
-                className="btn-adventure px-8 py-3 text-base"
-              >
-                SUBMIT
-              </button>
+              <button onClick={handleSubmit} className="btn-adventure px-8 py-3 text-base">SUBMIT</button>
             </motion.div>
           )}
 
           {levelData.type === "logic" && (
-            <motion.div
-              key="logic"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <h2 className="font-display text-xl text-emerald-700 font-bold mb-4">
-                LOGIC LOCK
-              </h2>
-              <p className="text-slate-600 mb-4">
-                Solve all three locks to proceed.
-              </p>
+            <motion.div key="logic" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <h2 className="font-display text-xl text-emerald-700 font-bold mb-4">LOGIC LOCK</h2>
+              <p className="text-slate-600 mb-4">Solve all three locks to proceed.</p>
               {levelData.locks.map((lock) => (
                 <div key={lock.id} className="mb-4">
-                  <p className="text-slate-100 mb-1 font-medium">
-                    {lock.question}
-                  </p>
+                  <p className="text-slate-100 mb-1 font-medium">{lock.question}</p>
                   <input
                     value={lockAnswers[lock.id] || ""}
-                    onChange={(e) =>
-                      setLockAnswers({
-                        ...lockAnswers,
-                        [lock.id]: e.target.value,
-                      })
-                    }
+                    onChange={(e) => setLockAnswers({ ...lockAnswers, [lock.id]: e.target.value })}
                     className="w-full bg-[#0a0e1a] border border-emerald-500/30 rounded-lg px-3 py-2"
                   />
                 </div>
               ))}
-              <button
-                onClick={handleSubmit}
-                className="btn-adventure px-8 py-3 text-base"
-              >
-                UNLOCK ALL
-              </button>
+              <button onClick={handleSubmit} className="btn-adventure px-8 py-3 text-base">UNLOCK ALL</button>
             </motion.div>
           )}
 
           {levelData.type === "arrangement" && (
-            <motion.div
-              key="arr"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <h2 className="font-cyber text-xl text-rose-300 mb-2">
-                CODE ARRANGEMENT
-              </h2>
+            <motion.div key="arr" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <h2 className="font-cyber text-xl text-rose-300 mb-2">CODE ARRANGEMENT</h2>
               <p className="text-slate-600 mb-4">{levelData.description}</p>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-slate-600 font-semibold mb-2">
-                    SHUFFLED
-                  </p>
+                  <p className="text-xs text-slate-600 font-semibold mb-2">SHUFFLED</p>
                   <div className="space-y-2 min-h-[200px] border border-dashed border-slate-700 rounded-lg p-2">
                     {shuffledLines.map((line, i) => (
                       <button
                         key={i}
                         onClick={() => {
                           setArranged([...arranged, line]);
-                          setShuffledLines(
-                            shuffledLines.filter((_, idx) => idx !== i),
-                          );
+                          setShuffledLines(shuffledLines.filter((_, idx) => idx !== i));
                         }}
                         className="w-full text-left text-xs font-mono bg-slate-800 p-2 rounded hover:bg-slate-700"
                       >
@@ -543,9 +445,7 @@ export default function LevelPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-600 font-semibold mb-2">
-                    YOUR ORDER
-                  </p>
+                  <p className="text-xs text-slate-600 font-semibold mb-2">YOUR ORDER</p>
                   <div className="space-y-2 min-h-[200px] border border-cyan-500/40 rounded-lg p-2">
                     {arranged.map((line, i) => (
                       <button
@@ -562,33 +462,17 @@ export default function LevelPage() {
                   </div>
                 </div>
               </div>
-              <button
-                onClick={handleSubmit}
-                className="btn-cyber mt-4 px-8 py-3 rounded-xl text-white font-bold"
-              >
-                SUBMIT ORDER
-              </button>
+              <button onClick={handleSubmit} className="btn-cyber mt-4 px-8 py-3 rounded-xl text-white font-bold">SUBMIT ORDER</button>
             </motion.div>
           )}
 
           {levelData.type === "memory" && (
-            <motion.div
-              key="mem"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
+            <motion.div key="mem" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               {memoryPhase === "warning" && (
                 <div className="text-center">
-                  <h2 className="font-cyber text-2xl text-amber-400 font-bold mb-4">
-                    ⚠ ATTENTION REQUIRED
-                  </h2>
-                  <p className="text-slate-100 mb-2 font-medium">
-                    This is a Code Memory Challenge.
-                  </p>
-                  <p className="text-slate-400 mb-6">
-                    The code will appear only once for a limited time. Memorize
-                    it carefully.
-                  </p>
+                  <h2 className="font-cyber text-2xl text-amber-400 font-bold mb-4">⚠ ATTENTION REQUIRED</h2>
+                  <p className="text-slate-100 mb-2 font-medium">This is a Code Memory Challenge.</p>
+                  <p className="text-slate-400 mb-6">The code will appear only once for a limited time. Memorize it carefully.</p>
                   <button
                     onClick={() => {
                       setMemoryPhase("show");
@@ -604,20 +488,14 @@ export default function LevelPage() {
                 <div>
                   <div className="flex justify-between mb-4">
                     <span className="text-cyan-300">Memorize...</span>
-                    <span className="text-2xl font-mono text-red-400">
-                      {memoryTimer}s
-                    </span>
+                    <span className="text-2xl font-mono text-red-400">{memoryTimer}s</span>
                   </div>
-                  <pre className="code-block p-4 text-sm text-emerald-700 overflow-x-auto">
-                    {levelData.code}
-                  </pre>
+                  <pre className="code-block p-4 text-sm text-emerald-700 overflow-x-auto">{levelData.code}</pre>
                 </div>
               )}
               {memoryPhase === "question" && (
                 <div>
-                  <h2 className="font-display text-xl text-amber-700 font-bold mb-4">
-                    From memory:
-                  </h2>
+                  <h2 className="font-display text-xl text-amber-700 font-bold mb-4">From memory:</h2>
                   <p className="mb-2">1. What is the output?</p>
                   <input
                     value={answer}
@@ -628,10 +506,7 @@ export default function LevelPage() {
                   <div className="flex gap-4 mb-6">
                     <button
                       onClick={() => {
-                        if (
-                          answer.trim() === levelData.output &&
-                          levelData.language === "python"
-                        ) {
+                        if (answer.trim() === levelData.output && levelData.language === "python") {
                           completeLevel();
                         } else {
                           applyPenalty();
@@ -645,10 +520,7 @@ export default function LevelPage() {
                     </button>
                     <button
                       onClick={() => {
-                        if (
-                          answer.trim() === levelData.output &&
-                          levelData.language === "java"
-                        ) {
+                        if (answer.trim() === levelData.output && levelData.language === "java") {
                           completeLevel();
                         } else {
                           applyPenalty();
