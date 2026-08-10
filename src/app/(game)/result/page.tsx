@@ -1,15 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import {
-  getCurrentUser,
-  getUserProgress,
-  getUsers,
-} from "@/lib/auth";
+import { getCurrentUser, getUserProgress, getUsers } from "@/lib/auth";
 
-export default function ResultPage() {
+function ResultContent() {
   const router = useRouter();
   const search = useSearchParams();
   const [data, setData] = useState<{
@@ -39,7 +35,9 @@ export default function ResultPage() {
           const sorted = ids
             .map((id) => ({ id, p: all[id] }))
             .sort((a, b) =>
-              String(b.p?.completedAt || "").localeCompare(String(a.p?.completedAt || ""))
+              String(b.p?.completedAt || "").localeCompare(
+                String(a.p?.completedAt || ""),
+              ),
             );
           const last = sorted[0];
           if (last) {
@@ -68,11 +66,16 @@ export default function ResultPage() {
     });
   }, [search]);
 
-
-
-  if (!data) return null;
+  if (!data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-cyan-400">
+        Loading results...
+      </div>
+    );
+  }
 
   const isDq = data.status === "disqualified";
+  const isTimeout = data.status === "timeout";
 
   return (
     <main className="sky-bg min-h-screen flex items-center justify-center px-4">
@@ -88,9 +91,22 @@ export default function ResultPage() {
 
         {isDq && (
           <div className="bg-red-950/50 border border-red-500/60 rounded-lg p-4 mb-6 text-center">
-            <p className="text-red-400 font-semibold text-lg font-display">DISQUALIFIED</p>
+            <p className="text-red-400 font-semibold text-lg font-display">
+              DISQUALIFIED
+            </p>
             <p className="text-red-200/70 text-sm mt-1">
               Anti-cheat triggered. This account can no longer play the game.
+            </p>
+          </div>
+        )}
+
+        {isTimeout && (
+          <div className="bg-amber-950/50 border border-amber-500/60 rounded-lg p-4 mb-6 text-center">
+            <p className="text-amber-400 font-semibold text-lg font-display">
+              TIME UP
+            </p>
+            <p className="text-amber-200/70 text-sm mt-1">
+              The 30-minute timer ran out before the quest was completed.
             </p>
           </div>
         )}
@@ -102,7 +118,9 @@ export default function ResultPage() {
           </div>
           <div className="flex justify-between">
             <span className="text-slate-400">Assigned Set</span>
-            <span className="text-cyan-300">{data.setId ? `#${data.setId}` : "—"}</span>
+            <span className="text-cyan-300">
+              {data.setId ? `#${data.setId}` : "—"}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-400">Levels Completed</span>
@@ -135,5 +153,19 @@ export default function ResultPage() {
         </button>
       </motion.div>
     </main>
+  );
+}
+
+export default function ResultPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center text-cyan-400">
+          Loading results...
+        </div>
+      }
+    >
+      <ResultContent />
+    </Suspense>
   );
 }
