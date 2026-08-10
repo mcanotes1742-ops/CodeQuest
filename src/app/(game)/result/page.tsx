@@ -3,7 +3,11 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { getCurrentUser, getUserProgress, getUsers } from "@/lib/auth";
+import {
+  getCurrentUser,
+  getUserProgress,
+  getUsers,
+} from "@/lib/auth";
 
 function ResultContent() {
   const router = useRouter();
@@ -36,8 +40,8 @@ function ResultContent() {
             .map((id) => ({ id, p: all[id] }))
             .sort((a, b) =>
               String(b.p?.completedAt || "").localeCompare(
-                String(a.p?.completedAt || ""),
-              ),
+                String(a.p?.completedAt || "")
+              )
             );
           const last = sorted[0];
           if (last) {
