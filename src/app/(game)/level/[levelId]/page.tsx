@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { getSetById } from "@/data/questions";
+import { getKeyForLevel, addCollectedKey, isKeysVerified } from "@/data/keys";
 import { useAntiCheat } from "@/hooks/useAntiCheat";
 import { formatTime, shuffleArray } from "@/lib/utils";
 import {
@@ -31,6 +32,13 @@ export default function LevelPage() {
   const [memoryPhase, setMemoryPhase] = useState<"warning" | "show" | "question">("warning");
   const [memoryTimer, setMemoryTimer] = useState(20);
   const [lockAnswers, setLockAnswers] = useState<Record<number, string>>({});
+  const [earnedKey, setEarnedKey] = useState<{
+    symbol: string;
+    code: string;
+    label: string;
+    color: string;
+    level: number;
+  } | null>(null);
   // Continuous whole-game timer: base duration + start time + accumulated penalty
   const [gameStartMs, setGameStartMs] = useState<number | null>(null);
   const [timePenaltySec, setTimePenaltySec] = useState(0);
@@ -78,6 +86,11 @@ export default function LevelPage() {
       if (levelId > session.currentLevel) {
         toast.error("Level locked");
         router.replace("/map");
+        return;
+      }
+      if (levelId === 6 && !isKeysVerified(session.userId)) {
+        toast.error("Assemble your keys first");
+        router.replace("/key-gate");
         return;
       }
 
@@ -260,6 +273,16 @@ export default function LevelPage() {
           fragments: newFragments,
           score: newScore,
         });
+      }
+      // Award key for levels 1–5 → dedicated congratulations page
+      if (levelId >= 1 && levelId <= 5) {
+        const key = getKeyForLevel(levelId);
+        if (key && userId) {
+          addCollectedKey(userId, key.id);
+          toast.success(`Key collected: ${key.code}`);
+          router.push(`/key-reward?level=${levelId}`);
+          return;
+        }
       }
       toast.success("Fragment collected! Next level unlocked.");
       router.push("/map");
@@ -478,7 +501,7 @@ export default function LevelPage() {
                       setMemoryPhase("show");
                       setMemoryTimer(20);
                     }}
-                    className="btn-gold px-10 py-3 rounded-xl text-white font-bold"
+                    className="btn-gold px-10 py-3 rounded-xl font-bold"
                   >
                     START MEMORY
                   </button>
@@ -539,6 +562,49 @@ export default function LevelPage() {
           )}
         </AnimatePresence>
       </div>
+    
+      {/* KEY EARNED MODAL */}
+      {earnedKey && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="quest-card max-w-md w-full p-8 text-center border border-cyan-500/40"
+          >
+            <p className="text-sm text-cyan-400 font-bold tracking-widest mb-2">KEY ACQUIRED</p>
+            <div
+              className={`mx-auto w-24 h-24 rounded-2xl flex items-center justify-center text-5xl bg-gradient-to-br ${earnedKey.color} shadow-lg mb-4`}
+            >
+              {earnedKey.symbol}
+            </div>
+            <h2 className="font-display text-2xl text-amber-300 font-bold mb-1">
+              {earnedKey.label}
+            </h2>
+            <p className="font-mono text-3xl text-cyan-300 tracking-widest mb-2">
+              {earnedKey.code}
+            </p>
+            <p className="text-slate-400 text-sm mb-6">
+              Remember this key. You will need all 5 keys before the Master Vault opens.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                const lvl = earnedKey.level;
+                setEarnedKey(null);
+                if (lvl === 5) {
+                  router.push("/key-gate");
+                } else {
+                  router.push("/map");
+                }
+              }}
+              className="btn-adventure px-8 py-3 text-base w-full"
+            >
+              {earnedKey.level === 5 ? "ASSEMBLE KEYS →" : "CONTINUE TO MAP"}
+            </button>
+          </motion.div>
+        </div>
+      )}
+
     </main>
   );
 }

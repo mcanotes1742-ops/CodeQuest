@@ -5,6 +5,28 @@
 import { createClient } from "@/lib/supabase/client";
 import type { PlayMode, TeamMember } from "@/lib/auth";
 
+
+async function pickBalancedSetIdSupabase(
+  supabase: ReturnType<typeof createClient>
+): Promise<number> {
+  const { data } = await supabase.from("game_sessions").select("set_id");
+  const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+  for (const row of data || []) {
+    const id = Number(row.set_id);
+    if (id >= 1 && id <= 6) counts[id] = (counts[id] || 0) + 1;
+  }
+  let min = Infinity;
+  const candidates: number[] = [];
+  for (let i = 1; i <= 6; i++) {
+    if (counts[i] < min) {
+      min = counts[i];
+      candidates.length = 0;
+      candidates.push(i);
+    } else if (counts[i] === min) candidates.push(i);
+  }
+  return candidates[Math.floor(Math.random() * candidates.length)] || await pickBalancedSetIdSupabase(supabase);
+}
+
 export function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -158,7 +180,7 @@ export async function supabaseStartGame(): Promise<{
       if (!settings?.allow_disqualified_replay) {
         return { success: false, error: "Account disqualified. Cannot play again." };
       }
-      const newSet = Math.floor(Math.random() * 6) + 1;
+      const newSet = await pickBalancedSetIdSupabase(supabase);
       const { data: updated, error } = await supabase
         .from("game_sessions")
         .update({
@@ -200,7 +222,7 @@ export async function supabaseStartGame(): Promise<{
     }
   }
 
-  const setId = Math.floor(Math.random() * 6) + 1;
+  const setId = await pickBalancedSetIdSupabase(supabase);
   const { data: created, error } = await supabase
     .from("game_sessions")
     .upsert(

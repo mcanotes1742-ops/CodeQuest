@@ -10,46 +10,24 @@ interface UseAntiCheatOptions {
 }
 
 /**
- * Active only during LEVEL play (enabled=true on level page).
- *
- * Disqualify when:
- * - Switch tab / minimize / hide window (visibility hidden)
- * - Leave the game window (blur / another app or window)
- * - Copy / cut / paste
- * - Right-click
- * - DevTools shortcuts (F12, Ctrl+Shift+I/J/C, Ctrl+C/X/V)
+ * Active only during LEVEL play.
+ * Redirects to result IMMEDIATELY, then saves DQ in background.
  */
 export function useAntiCheat({ enabled, onDisqualify }: UseAntiCheatOptions) {
   const router = useRouter();
   const hasDisqualified = useRef(false);
   const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Ignore blur/visibility for a short time after mount so page load does not false-fire
   const armedAt = useRef<number>(0);
 
   const disqualify = useCallback(
-    async (reason: string) => {
+    (reason: string) => {
       if (hasDisqualified.current || !enabled) return;
-      // Grace period: 800ms after anti-cheat arms
       if (Date.now() < armedAt.current) return;
       hasDisqualified.current = true;
 
-      toast.error(`Disqualified: ${reason}`, { duration: 4000 });
+      toast.error(`Disqualified: ${reason}`, { duration: 3000 });
 
-      try {
-        await Promise.resolve(onDisqualify());
-      } catch (e) {
-        console.error("Disqualify handler error:", e);
-      }
-
-      try {
-        await fetch("/api/game/disqualify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reason }),
-          keepalive: true,
-        });
-      } catch {}
-
+      // Snapshot progress for result page BEFORE anything clears session
       try {
         const uid =
           localStorage.getItem("cq_session") ||
@@ -61,10 +39,60 @@ export function useAntiCheat({ enabled, onDisqualify }: UseAntiCheatOptions) {
               return null;
             }
           })();
-        if (uid) localStorage.setItem("cq_disqualified_" + uid, "1");
+        if (uid) {
+          localStorage.setItem("cq_disqualified_" + uid, "1");
+          // Snapshot for result UI
+          const progressRaw = localStorage.getItem("cq_progress");
+          const all = progressRaw ? JSON.parse(progressRaw) : {};
+          const p = all[uid] || {};
+          const snap = {
+            userId: uid,
+            name: (() => {
+              try {
+                const s = JSON.parse(localStorage.getItem("cq_supabase_session") || "{}");
+                return s.displayName || "Explorer";
+              } catch {
+                return "Explorer";
+              }
+            })(),
+            setId: p.setId ?? null,
+            currentLevel: p.currentLevel ?? 1,
+            levelsCompleted: p.levelsCompleted || [],
+            fragments: p.fragments ?? 0,
+            score: p.score ?? 0,
+            wrongAttempts: p.wrongAttempts ?? 0,
+            status: "disqualified",
+            reason,
+          };
+          // Try supabase session cache too
+          try {
+            const s = JSON.parse(localStorage.getItem("cq_supabase_session") || "{}");
+            if (s.userId === uid) {
+              snap.fragments = s.fragments ?? snap.fragments;
+              snap.score = s.score ?? snap.score;
+              snap.setId = s.setId ?? snap.setId;
+              snap.currentLevel = s.currentLevel ?? snap.currentLevel;
+              snap.wrongAttempts = s.wrongAttempts ?? snap.wrongAttempts;
+              snap.name = s.displayName || snap.name;
+            }
+          } catch {}
+          sessionStorage.setItem("cq_result_snapshot", JSON.stringify(snap));
+        }
       } catch {}
 
+      // IMMEDIATE redirect — do not wait for network
       router.replace("/result?status=disqualified");
+
+      // Background save
+      Promise.resolve(onDisqualify()).catch((e) => console.error(e));
+      try {
+        fetch("/api/game/disqualify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason }),
+          keepalive: true,
+        }).catch(() => {});
+      } catch {}
     },
     [enabled, onDisqualify, router]
   );
@@ -75,7 +103,7 @@ export function useAntiCheat({ enabled, onDisqualify }: UseAntiCheatOptions) {
       return;
     }
 
-    armedAt.current = Date.now() + 800;
+    armedAt.current = Date.now() + 600;
 
     const handleContext = (e: MouseEvent) => {
       e.preventDefault();
@@ -94,21 +122,19 @@ export function useAntiCheat({ enabled, onDisqualify }: UseAntiCheatOptions) {
       disqualify("Paste is not allowed");
     };
 
-    // Tab switch, minimize, another browser tab
     const handleVisibility = () => {
       if (document.hidden) {
         disqualify("Tab switch or window hidden");
       }
     };
 
-    // Another window / Alt+Tab / click outside browser
     const handleBlur = () => {
       if (blurTimer.current) clearTimeout(blurTimer.current);
       blurTimer.current = setTimeout(() => {
         if (!document.hasFocus() || document.hidden) {
           disqualify("Left the game window");
         }
-      }, 200);
+      }, 150);
     };
 
     const handleFocus = () => {

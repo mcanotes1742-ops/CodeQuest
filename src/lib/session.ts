@@ -22,6 +22,7 @@ export interface AppSession {
   wrongAttempts: number;
   timePenalty: number;
   status: string;
+  levelsCompleted: number[];
   sessionId?: string;
   /** ISO timestamp when the game session started (for continuous whole-game timer) */
   startedAt?: string | null;
@@ -110,6 +111,9 @@ export async function resolveSession(): Promise<AppSession | null> {
           wrongAttempts: session?.wrong_attempts ?? 0,
           timePenalty: session?.time_penalty ?? 0,
           status: session?.status ?? "active",
+          levelsCompleted: Array.isArray(session?.levels_completed)
+            ? session.levels_completed
+            : [],
           sessionId: session?.id,
           startedAt: session?.started_at ?? null,
           avatarUrl,
@@ -148,6 +152,7 @@ export async function resolveSession(): Promise<AppSession | null> {
           wrongAttempts: progress?.wrongAttempts ?? 0,
           timePenalty: progress?.timePenalty ?? 0,
           status,
+          levelsCompleted: progress?.levelsCompleted ?? [],
           sessionId: s.sessionId,
           startedAt: progress?.startedAt ?? null,
           avatarUrl: getLocalAvatar(s.userId) || s.avatarUrl || null,
@@ -173,6 +178,7 @@ export async function resolveSession(): Promise<AppSession | null> {
     wrongAttempts: progress?.wrongAttempts ?? 0,
     timePenalty: progress?.timePenalty ?? 0,
     status: progress?.status ?? "active",
+    levelsCompleted: progress?.levelsCompleted ?? [],
     startedAt: progress?.startedAt ?? null,
     avatarUrl: getLocalAvatar(user.id),
     avatarId: getLocalAvatarId(user.id),

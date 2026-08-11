@@ -282,6 +282,29 @@ export function logoutUser() {
   localStorage.removeItem(SESSION_KEY);
 }
 
+
+/** Prefer least-used set 1–6 so players get different sets */
+export function pickBalancedSetId(): number {
+  const all = getAllProgress();
+  const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+  for (const s of Object.values(all)) {
+    const id = s?.setId;
+    if (id >= 1 && id <= 6) counts[id] = (counts[id] || 0) + 1;
+  }
+  let min = Infinity;
+  const candidates: number[] = [];
+  for (let i = 1; i <= 6; i++) {
+    if (counts[i] < min) {
+      min = counts[i];
+      candidates.length = 0;
+      candidates.push(i);
+    } else if (counts[i] === min) {
+      candidates.push(i);
+    }
+  }
+  return candidates[Math.floor(Math.random() * candidates.length)] || pickBalancedSetId();
+}
+
 export function startOrResumeGame(
   userId: string
 ): { success: boolean; error?: string; session?: GameSession } {
@@ -296,7 +319,7 @@ export function startOrResumeGame(
         };
       }
       // Admin allowed replay: reset session
-      const setId = Math.floor(Math.random() * 6) + 1;
+      const setId = pickBalancedSetId();
       const session: GameSession = {
         userId,
         setId,
@@ -323,7 +346,7 @@ export function startOrResumeGame(
     return { success: true, session: existing };
   }
 
-  const setId = Math.floor(Math.random() * 6) + 1;
+  const setId = pickBalancedSetId();
   const session: GameSession = {
     userId,
     setId,
@@ -351,6 +374,7 @@ export function updateProgress(userId: string, updates: Partial<GameSession>) {
 }
 
 export function disqualifyUser(userId: string) {
+  // Keep progress numbers so result page can show them — do NOT logout here
   updateProgress(userId, {
     status: "disqualified",
     completedAt: new Date().toISOString(),
@@ -358,9 +382,6 @@ export function disqualifyUser(userId: string) {
   try {
     localStorage.setItem("cq_disqualified_" + userId, "1");
   } catch {}
-  if (getCurrentUserId() === userId) {
-    logoutUser();
-  }
 }
 
 export function getAllParticipantsForAdmin() {

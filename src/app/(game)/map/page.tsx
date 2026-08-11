@@ -1,5 +1,7 @@
 "use client";
 
+import { LEVEL_KEYS, loadCollectedKeys, isKeysVerified } from "@/data/keys";
+
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -20,6 +22,8 @@ export default function MapPage() {
   const router = useRouter();
   const [currentLevel, setCurrentLevel] = useState(1);
   const [fragments, setFragments] = useState(0);
+  const [collectedKeys, setCollectedKeys] = useState<string[]>([]);
+  const [keysOk, setKeysOk] = useState(false);
   const [userName, setUserName] = useState("Explorer");
   const [userId, setUserId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -47,6 +51,8 @@ export default function MapPage() {
       setAvatarId(session.avatarId || getLocalAvatarId(session.userId) || "explorer");
       setCurrentLevel(session.currentLevel || 1);
       setFragments(session.fragments || 0);
+      setCollectedKeys(loadCollectedKeys(session.userId));
+      setKeysOk(isKeysVerified(session.userId));
       setReady(true);
     })();
   }, [router]);
@@ -77,11 +83,40 @@ export default function MapPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 bg-amber-950/40 border border-amber-500/40 rounded-full px-4 py-2">
-          <span className="text-xl">💎</span>
-          <span className="font-bold text-amber-400">
-            {Math.min(fragments, 5)} / 5 Fragments
-          </span>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2 bg-amber-950/40 border border-amber-500/40 rounded-full px-4 py-2">
+            <span className="text-xl">💎</span>
+            <span className="font-bold text-amber-400">
+              {Math.min(fragments, 5)} / 5 Keys
+            </span>
+          </div>
+          <div className="flex gap-1.5 flex-wrap justify-end">
+            {LEVEL_KEYS.map((k) => {
+              const got = collectedKeys.includes(k.id);
+              return (
+                <div
+                  key={k.id}
+                  title={got ? `${k.label} (${k.code})` : "Not yet"}
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center text-base border ${
+                    got
+                      ? `bg-gradient-to-br ${k.color} border-cyan-400/50`
+                      : "bg-slate-900 border-slate-700 opacity-30"
+                  }`}
+                >
+                  {got ? k.symbol : "?"}
+                </div>
+              );
+            })}
+          </div>
+          {currentLevel >= 6 && !keysOk && (
+            <button
+              type="button"
+              onClick={() => router.push("/key-gate")}
+              className="text-xs text-cyan-400 underline"
+            >
+              Assemble keys for Master Vault →
+            </button>
+          )}
         </div>
       </div>
 
@@ -110,7 +145,14 @@ export default function MapPage() {
                 <button
                   type="button"
                   disabled={!unlocked}
-                  onClick={() => unlocked && router.push(`/level/${lvl.id}`)}
+                  onClick={() => {
+                    if (!unlocked) return;
+                    if (lvl.id === 6 && !keysOk) {
+                      router.push("/key-gate");
+                      return;
+                    }
+                    router.push(`/level/${lvl.id}`);
+                  }}
                   className={`
                     relative w-full aspect-square max-w-[140px] rounded-[1.75rem]
                     bg-gradient-to-br ${lvl.color}
