@@ -41,41 +41,34 @@ export function useAntiCheat({ enabled, onDisqualify }: UseAntiCheatOptions) {
           })();
         if (uid) {
           localStorage.setItem("cq_disqualified_" + uid, "1");
-          // Snapshot for result UI
+          // Snapshot for result UI — prefer local progress, then expanded supabase cache
           const progressRaw = localStorage.getItem("cq_progress");
           const all = progressRaw ? JSON.parse(progressRaw) : {};
           const p = all[uid] || {};
+          let sCache: Record<string, unknown> = {};
+          try {
+            sCache = JSON.parse(localStorage.getItem("cq_supabase_session") || "{}");
+          } catch {}
+          const levelsCompleted =
+            (Array.isArray(p.levelsCompleted) && p.levelsCompleted.length > 0
+              ? p.levelsCompleted
+              : Array.isArray(sCache.levelsCompleted)
+                ? (sCache.levelsCompleted as number[])
+                : []) || [];
           const snap = {
             userId: uid,
-            name: (() => {
-              try {
-                const s = JSON.parse(localStorage.getItem("cq_supabase_session") || "{}");
-                return s.displayName || "Explorer";
-              } catch {
-                return "Explorer";
-              }
-            })(),
-            setId: p.setId ?? null,
-            currentLevel: p.currentLevel ?? 1,
-            levelsCompleted: p.levelsCompleted || [],
-            fragments: p.fragments ?? 0,
-            score: p.score ?? 0,
-            wrongAttempts: p.wrongAttempts ?? 0,
+            name:
+              (typeof sCache.displayName === "string" && sCache.displayName) ||
+              "Explorer",
+            setId: p.setId ?? sCache.setId ?? null,
+            currentLevel: p.currentLevel ?? sCache.currentLevel ?? 1,
+            levelsCompleted,
+            fragments: p.fragments ?? sCache.fragments ?? 0,
+            score: p.score ?? sCache.score ?? 0,
+            wrongAttempts: p.wrongAttempts ?? sCache.wrongAttempts ?? 0,
             status: "disqualified",
             reason,
           };
-          // Try supabase session cache too
-          try {
-            const s = JSON.parse(localStorage.getItem("cq_supabase_session") || "{}");
-            if (s.userId === uid) {
-              snap.fragments = s.fragments ?? snap.fragments;
-              snap.score = s.score ?? snap.score;
-              snap.setId = s.setId ?? snap.setId;
-              snap.currentLevel = s.currentLevel ?? snap.currentLevel;
-              snap.wrongAttempts = s.wrongAttempts ?? snap.wrongAttempts;
-              snap.name = s.displayName || snap.name;
-            }
-          } catch {}
           sessionStorage.setItem("cq_result_snapshot", JSON.stringify(snap));
         }
       } catch {}

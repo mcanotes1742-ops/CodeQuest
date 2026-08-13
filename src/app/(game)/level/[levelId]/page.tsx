@@ -180,6 +180,21 @@ export default function LevelPage() {
           wrong_attempts: wrong,
           time_penalty: penalty,
         });
+        // Mirror so DQ snapshot / result page stay accurate
+        if (userId) {
+          updateProgress(userId, {
+            wrongAttempts: wrong,
+            timePenalty: penalty,
+          });
+          try {
+            const raw = localStorage.getItem("cq_supabase_session");
+            if (raw) {
+              const s = JSON.parse(raw);
+              s.wrongAttempts = wrong;
+              localStorage.setItem("cq_supabase_session", JSON.stringify(s));
+            }
+          } catch {}
+        }
       } catch (e) {
         console.error(e);
       }
@@ -204,12 +219,15 @@ export default function LevelPage() {
     let fragments = 0;
     let score = 0;
     let levelsCompleted: number[] = [];
+    let wrongAttempts = 0;
 
     if (isSupabaseConfigured()) {
       const session = await resolveSession();
       currentLevel = session?.currentLevel || levelId;
       fragments = session?.fragments || 0;
       score = session?.score || 0;
+      levelsCompleted = session?.levelsCompleted || [];
+      wrongAttempts = session?.wrongAttempts || 0;
     } else {
       const p = getUserProgress(userId);
       if (p) {
@@ -217,6 +235,7 @@ export default function LevelPage() {
         fragments = p.fragments;
         score = p.score;
         levelsCompleted = p.levelsCompleted || [];
+        wrongAttempts = p.wrongAttempts || 0;
       }
     }
 
@@ -224,6 +243,38 @@ export default function LevelPage() {
     const newFragments = fragments + 1;
     const newScore = score + 15;
     const completed = [...new Set([...levelsCompleted, levelId])];
+
+    // Always mirror progress to localStorage so DQ snapshot + result page stay accurate
+    const mirrorLocal = (payload: {
+      currentLevel: number;
+      levelsCompleted: number[];
+      fragments: number;
+      score: number;
+      status?: "active" | "completed" | "disqualified" | "abandoned";
+    }) => {
+      try {
+        const status = payload.status ?? "active";
+        updateProgress(userId, {
+          currentLevel: payload.currentLevel,
+          levelsCompleted: payload.levelsCompleted,
+          fragments: payload.fragments,
+          score: payload.score,
+          wrongAttempts,
+          status,
+        });
+        const raw = localStorage.getItem("cq_supabase_session");
+        if (raw) {
+          const s = JSON.parse(raw);
+          s.currentLevel = payload.currentLevel;
+          s.fragments = payload.fragments;
+          s.score = payload.score;
+          s.levelsCompleted = payload.levelsCompleted;
+          s.wrongAttempts = wrongAttempts;
+          s.status = status;
+          localStorage.setItem("cq_supabase_session", JSON.stringify(s));
+        }
+      } catch {}
+    };
 
     if (levelId === 6) {
       if (isSupabaseConfigured()) {
@@ -236,17 +287,14 @@ export default function LevelPage() {
           completed_at: new Date().toISOString(),
           final_time: timer,
         });
-      } else {
-        updateProgress(userId, {
-          currentLevel: 7,
-          levelsCompleted: completed,
-          fragments: newFragments,
-          score: newScore,
-          status: "completed",
-          completedAt: new Date().toISOString(),
-          finalTime: timer,
-        });
       }
+      mirrorLocal({
+        currentLevel: 7,
+        levelsCompleted: completed,
+        fragments: newFragments,
+        score: newScore,
+        status: "completed",
+      });
       toast.success("Master Key unlocked!");
       router.push("/victory");
     } else {
@@ -257,23 +305,13 @@ export default function LevelPage() {
           fragments: newFragments,
           score: newScore,
         });
-        // Refresh cached session for map
-        try {
-          const raw = localStorage.getItem("cq_supabase_session");
-          if (raw) {
-            const s = JSON.parse(raw);
-            s.currentLevel = nextLevel;
-            localStorage.setItem("cq_supabase_session", JSON.stringify(s));
-          }
-        } catch {}
-      } else {
-        updateProgress(userId, {
-          currentLevel: nextLevel,
-          levelsCompleted: completed,
-          fragments: newFragments,
-          score: newScore,
-        });
       }
+      mirrorLocal({
+        currentLevel: nextLevel,
+        levelsCompleted: completed,
+        fragments: newFragments,
+        score: newScore,
+      });
       // Award key for levels 1–5 → dedicated congratulations page
       if (levelId >= 1 && levelId <= 5) {
         const key = getKeyForLevel(levelId);

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { resolveSession } from "@/lib/session";
 import { getAvatarById, getLocalAvatarId } from "@/data/avatars";
 import { isSupabaseConfigured, supabaseStartGame } from "@/lib/supabase-auth";
+import { updateProgress } from "@/lib/auth";
 
 export default function BriefingPage() {
   const router = useRouter();
@@ -45,7 +46,22 @@ export default function BriefingPage() {
           } else router.replace("/login");
           return;
         }
-        setSetId(game.setId ?? session.setId);
+        const sid = game.setId ?? session.setId;
+        setSetId(sid);
+        // Seed local progress so DQ snapshot / result page have real stats
+        try {
+          updateProgress(session.userId, {
+            setId: sid,
+            currentLevel: game.currentLevel ?? session.currentLevel ?? 1,
+            levelsCompleted: session.levelsCompleted ?? [],
+            fragments: session.fragments ?? 0,
+            score: session.score ?? 0,
+            wrongAttempts: session.wrongAttempts ?? 0,
+            timePenalty: session.timePenalty ?? 0,
+            status: "active",
+            startedAt: session.startedAt ?? new Date().toISOString(),
+          });
+        } catch {}
       } else setSetId(session.setId);
       setLoading(false);
     })();
