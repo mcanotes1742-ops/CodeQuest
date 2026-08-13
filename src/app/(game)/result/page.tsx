@@ -25,87 +25,25 @@ function ResultContent() {
     (async () => {
       const statusParam = search.get("status");
 
-      const buildFrom = (
-        base: {
-          name?: string;
-          setId?: number | null;
-          levels?: number;
-          fragments?: number;
-          score?: number;
-          wrongs?: number;
-          status?: string;
-          userId?: string;
-          currentLevel?: number;
-          levelsCompleted?: number[];
-        },
-        keys: string[]
-      ) => {
-        let levels =
-          base.levels ??
-          (Array.isArray(base.levelsCompleted) && base.levelsCompleted.length > 0
-            ? base.levelsCompleted.length
-            : Math.max(0, (base.currentLevel || 1) - 1));
-        let fragments = base.fragments ?? 0;
-        let score = base.score ?? 0;
-        // If progress numbers are still 0 but keys were collected, derive from keys
-        if ((levels === 0 && fragments === 0 && score === 0) && keys.length > 0) {
-          levels = keys.length;
-          fragments = keys.length;
-          score = keys.length * 15;
-        }
-        return {
-          name: base.name || "Explorer",
-          setId: base.setId ?? null,
-          levels,
-          fragments,
-          score,
-          wrongs: base.wrongs ?? 0,
-          status: statusParam || base.status || "unknown",
-          keys,
-        };
-      };
-
-      // 1) Snapshot saved at DQ time
+      // 1) Snapshot saved at DQ time (most accurate for stats)
       try {
         const snapRaw = sessionStorage.getItem("cq_result_snapshot");
         if (snapRaw) {
           const snap = JSON.parse(snapRaw);
-          const keys = snap.userId ? loadCollectedKeys(snap.userId) : [];
-          const built = buildFrom(
-            {
-              name: snap.name,
-              setId: snap.setId,
-              levelsCompleted: snap.levelsCompleted,
-              currentLevel: snap.currentLevel,
-              fragments: snap.fragments,
-              score: snap.score,
-              wrongs: snap.wrongAttempts,
-              status: snap.status || "disqualified",
-              userId: snap.userId,
-            },
-            keys
-          );
-          // If snapshot still empty, try merge with live session / local progress
-          if (built.levels === 0 && built.fragments === 0 && keys.length === 0) {
-            // fall through
-          } else {
-            // Also try to enrich from local progress / session if snapshot was partial
-            try {
-              const progress = snap.userId ? getUserProgress(snap.userId) : null;
-              if (progress && (progress.fragments > built.fragments || progress.score > built.score)) {
-                built.levels = Math.max(
-                  built.levels,
-                  progress.levelsCompleted?.length ?? 0,
-                  Math.max(0, (progress.currentLevel || 1) - 1)
-                );
-                built.fragments = Math.max(built.fragments, progress.fragments ?? 0);
-                built.score = Math.max(built.score, progress.score ?? 0);
-                built.wrongs = Math.max(built.wrongs, progress.wrongAttempts ?? 0);
-              }
-            } catch {}
-            setData(built);
-            return;
-          }
+          const levelsCount = Array.isArray(snap.levelsCompleted)
+            ? snap.levelsCompleted.length
+            : Math.max(0, (snap.currentLevel || 1) - 1);
+          setData({
+            name: snap.name || "Explorer",
+            setId: snap.setId ?? null,
+            levels: levelsCount,
+            fragments: snap.fragments ?? 0,
+            score: snap.score ?? 0,
+            wrongs: snap.wrongAttempts ?? 0,
+            status: statusParam || snap.status || "disqualified",
+            keys: snap.userId ? loadCollectedKeys(snap.userId) : [],
+          });
+          return;
         }
       } catch {}
 
@@ -113,29 +51,31 @@ function ResultContent() {
       try {
         const session = await resolveSession();
         if (session) {
+          const levelsCount =
+            Array.isArray(session.levelsCompleted) &&
+            session.levelsCompleted.length > 0
+              ? session.levelsCompleted.length
+              : Math.max(0, (session.currentLevel || 1) - 1);
+
           let status = statusParam || session.status || "unknown";
           try {
-            if (localStorage.getItem("cq_disqualified_" + session.userId) === "1") {
+            if (
+              localStorage.getItem("cq_disqualified_" + session.userId) === "1"
+            ) {
               status = "disqualified";
             }
           } catch {}
-          const keys = loadCollectedKeys(session.userId);
-          setData(
-            buildFrom(
-              {
-                name: session.displayName,
-                setId: session.setId,
-                levelsCompleted: session.levelsCompleted,
-                currentLevel: session.currentLevel,
-                fragments: session.fragments,
-                score: session.score,
-                wrongs: session.wrongAttempts,
-                status,
-                userId: session.userId,
-              },
-              keys
-            )
-          );
+
+          setData({
+            name: session.displayName || "Explorer",
+            setId: session.setId ?? null,
+            levels: levelsCount,
+            fragments: session.fragments ?? 0,
+            score: session.score ?? 0,
+            wrongs: session.wrongAttempts ?? 0,
+            status,
+            keys: loadCollectedKeys(session.userId),
+          });
           return;
         }
       } catch (e) {
@@ -146,23 +86,20 @@ function ResultContent() {
       const user = getCurrentUser();
       if (user) {
         const progress = getUserProgress(user.id);
-        const keys = loadCollectedKeys(user.id);
-        setData(
-          buildFrom(
-            {
-              name: user.displayName,
-              setId: progress?.setId,
-              levelsCompleted: progress?.levelsCompleted,
-              currentLevel: progress?.currentLevel,
-              fragments: progress?.fragments,
-              score: progress?.score,
-              wrongs: progress?.wrongAttempts,
-              status: progress?.status,
-              userId: user.id,
-            },
-            keys
-          )
-        );
+        setData({
+          name: user.displayName,
+          setId: progress?.setId ?? null,
+          levels: progress?.levelsCompleted?.length ??
+            Math.max(0, (progress?.currentLevel || 1) - 1),
+          fragments: progress?.fragments ?? 0,
+          score: progress?.score ?? 0,
+          wrongs: progress?.wrongAttempts ?? 0,
+          status:
+            statusParam ||
+            progress?.status ||
+            "unknown",
+          keys: loadCollectedKeys(user.id),
+        });
         return;
       }
 

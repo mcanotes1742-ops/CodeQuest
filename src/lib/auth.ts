@@ -368,23 +368,8 @@ export function startOrResumeGame(
 
 export function updateProgress(userId: string, updates: Partial<GameSession>) {
   const all = getAllProgress();
-  // Upsert: Supabase path may never have created a local entry yet
-  const existing = all[userId];
-  all[userId] = {
-    userId,
-    setId: existing?.setId ?? updates.setId ?? 1,
-    currentLevel: existing?.currentLevel ?? 1,
-    levelsCompleted: existing?.levelsCompleted ?? [],
-    fragments: existing?.fragments ?? 0,
-    score: existing?.score ?? 0,
-    wrongAttempts: existing?.wrongAttempts ?? 0,
-    timePenalty: existing?.timePenalty ?? 0,
-    startedAt: existing?.startedAt ?? new Date().toISOString(),
-    status: existing?.status ?? "active",
-    finalTime: existing?.finalTime ?? null,
-    completedAt: existing?.completedAt ?? null,
-    ...updates,
-  };
+  if (!all[userId]) return;
+  all[userId] = { ...all[userId], ...updates };
   saveAllProgress(all);
 }
 

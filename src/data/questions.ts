@@ -53,174 +53,129 @@ export interface QuestionSet {
   };
 }
 
-/**
- * 6 medium→hard question sets
- * Level map:
- *  1 = Code Riddle
- *  2 = Output Hunt
- *  3 = Code Detective
- *  4 = Logic Lock (3 locks)
- *  5 = Code Arrangement
- *  6 = Master Vault (memory)
- */
 export const QUESTION_SETS: QuestionSet[] = [
-  // ==================== SET 1 ====================
   {
     id: 1,
     levels: {
       1: {
         type: "riddle",
-        question:
-          "I stay the same after creation; any 'change' creates a new me. Strings in Java and tuples in Python love me. What concept am I?",
-        answer: "immutability",
+        question: "I repeat myself until the condition is false. Who am I?",
+        answer: "while loop",
       },
       2: {
         type: "output",
         language: "python",
-        code: `def f(a, b=[]):
-    b.append(a)
-    return b
-
-print(f(1), f(2), f(3, []))`,
-        answer: "[1, 2] [1, 2] [3]",
+        code: `numbers = [2, 4, 6, 8]
+result = []
+for num in numbers:
+    if num % 4 == 0:
+        result.append(num * 2)
+print(result)`,
+        answer: "[16]",
       },
       3: {
         type: "detective",
         language: "python",
-        code: `nums = [1, 2, 3, 4]
-for i in range(len(nums)):
-    if nums[i] % 2 == 0:
-        nums.remove(nums[i])
-print(nums)`,
-        bugDescription: "Even numbers should be removed, but this crashes or skips values. Find the bug.",
-        correctFix: "modifying list while iterating",
+        code: `let score = 100;
+if (score = 100) {
+  console.log("ACCESS GRANTED");
+} else {
+  console.log("ACCESS DENIED");
+}`,
+        bugDescription: "The program is not working as expected. Find and fix the bug.",
+        correctFix: "assignment instead of comparison",
         options: [
-          "Index starts at 1 instead of 0",
-          "Modifying list while iterating",
-          "Wrong modulo operator",
-          "print uses wrong variable",
+          "Missing semicolon",
+          "Assignment instead of comparison",
+          "Wrong variable name",
+          "Syntax error in else",
         ],
       },
       4: {
         type: "logic",
         locks: [
-          {
-            id: 1,
-            question: "bool([]) == bool('') == bool(0) evaluates to?",
-            answer: "true",
-          },
-          {
-            id: 2,
-            question: "[x for x in range(5) if x % 2] produces?",
-            answer: "[1, 3]",
-          },
-          {
-            id: 3,
-            question: "Average time to check if an item is in a Python set?",
-            answer: "o(1)",
-          },
+          { id: 1, question: "What is the output of: print(2 ** 3 + 1)?", answer: "9" },
+          { id: 2, question: "True and False or True evaluates to?", answer: "true" },
+          { id: 3, question: "len('code') + len('quest') = ?", answer: "9" },
         ],
       },
       5: {
         type: "arrangement",
         language: "python",
-        description: "Arrange lines to implement binary search (return index or -1).",
+        description: "Arrange the lines to correctly find the maximum in a list.",
         correctLines: [
-          "def binary_search(arr, target):",
-          "    lo, hi = 0, len(arr) - 1",
-          "    while lo <= hi:",
-          "        mid = (lo + hi) // 2",
-          "        if arr[mid] == target:",
-          "            return mid",
-          "        if arr[mid] < target:",
-          "            lo = mid + 1",
-          "        else:",
-          "            hi = mid - 1",
-          "    return -1",
+          "def find_max(arr):",
+          "    if not arr:",
+          "        return None",
+          "    max_val = arr[0]",
+          "    for num in arr[1:]:",
+          "        if num > max_val:",
+          "            max_val = num",
+          "    return max_val",
         ],
       },
       6: {
         type: "memory",
         language: "python",
-        code: `def mystery(n):
-    a, b = 0, 1
-    for _ in range(n):
-        a, b = b, a + b
-    return a
+        code: `def unique_sum(arr):
+    return sum(set(arr))
 
-print(mystery(6))`,
-        output: "8",
+print(unique_sum([1, 2, 2, 3, 4, 4]))`,
+        output: "10",
       },
     },
   },
-
-  // ==================== SET 2 ====================
   {
     id: 2,
     levels: {
       1: {
         type: "riddle",
-        question:
-          "Only one instance of me is allowed in the whole app. Misused, I become hidden global state. What design pattern am I?",
-        answer: "singleton",
+        question: "I store multiple values of the same type and am indexed from zero. Who am I?",
+        answer: "array",
       },
       2: {
         type: "output",
         language: "java",
         code: `public class Main {
   public static void main(String[] args) {
-    String a = "code";
-    String b = "code";
-    String c = new String("code");
-    System.out.print((a == b) + " " + (a == c) + " " + a.equals(c));
+    int x = 5;
+    System.out.println(x++ + ++x);
   }
 }`,
-        answer: "true false true",
+        answer: "12",
       },
       3: {
         type: "detective",
         language: "java",
-        code: `int[] arr = {10, 20, 30};
-for (int i = 0; i <= arr.length; i++) {
-  System.out.println(arr[i]);
+        code: `int[] nums = {1, 2, 3};
+for(int i = 0; i <= nums.length; i++) {
+  System.out.println(nums[i]);
 }`,
-        bugDescription: "This throws ArrayIndexOutOfBoundsException. Why?",
-        correctFix: "off-by-one in loop condition",
+        bugDescription: "ArrayIndexOutOfBoundsException. Find the bug.",
+        correctFix: "off by one",
         options: [
-          "Array is null",
-          "Off-by-one in loop condition",
+          "Off-by-one error in loop condition",
+          "Missing import",
           "Wrong array type",
-          "Missing break statement",
+          "Null pointer",
         ],
       },
       4: {
         type: "logic",
         locks: [
-          {
-            id: 1,
-            question: "Default value of an uninitialized boolean field in Java?",
-            answer: "false",
-          },
-          {
-            id: 2,
-            question: "Which collection forbids duplicate elements?",
-            answer: "set",
-          },
-          {
-            id: 3,
-            question: "What is the value of 5 << 1 in Java?",
-            answer: "10",
-          },
+          { id: 1, question: "In Java, what is 10 % 3?", answer: "1" },
+          { id: 2, question: "Boolean result of (5 > 3 && 2 < 4)", answer: "true" },
+          { id: 3, question: "String length of \"Hello\".length()", answer: "5" },
         ],
       },
       5: {
         type: "arrangement",
         language: "java",
-        description: "Arrange lines to reverse a string with StringBuilder.",
+        description: "Arrange to correctly reverse a string.",
         correctLines: [
           "public static String reverse(String s) {",
           "    StringBuilder sb = new StringBuilder();",
-          "    for (int i = s.length() - 1; i >= 0; i--) {",
+          "    for(int i = s.length() - 1; i >= 0; i--) {",
           "        sb.append(s.charAt(i));",
           "    }",
           "    return sb.toString();",
@@ -230,163 +185,119 @@ for (int i = 0; i <= arr.length; i++) {
       6: {
         type: "memory",
         language: "java",
-        code: `int x = 5;
-int y = x++ + ++x;
-System.out.println(y);`,
-        output: "12",
+        code: `int sum = 0;
+for(int i = 1; i <= 5; i++) {
+  if(i % 2 == 0) continue;
+  sum += i;
+}
+System.out.println(sum);`,
+        output: "9",
       },
     },
   },
-
-  // ==================== SET 3 ====================
   {
     id: 3,
     levels: {
       1: {
         type: "riddle",
-        question:
-          "I grow by doubling capacity under the hood, give amortized O(1) append, and waste some empty slots. What structure am I?",
-        answer: "dynamic array",
+        question: "I am called to perform a specific task and can return a value. Who am I?",
+        answer: "function",
       },
       2: {
         type: "output",
         language: "python",
-        code: `a = [1, 2, 3]
-b = a
-b.append(4)
-print(a is b, a)`,
-        answer: "true [1, 2, 3, 4]",
+        code: `x = [1, 2, 3]
+y = x
+y.append(4)
+print(x)`,
+        answer: "[1, 2, 3, 4]",
       },
       3: {
         type: "detective",
         language: "python",
-        code: `def average(nums):
-    total = 0
-    for n in nums:
-        total += n
-    return total / len(nums)
+        code: `def greet(name):
+print("Hello " + name)
 
-print(average([]))`,
-        bugDescription: "Calling average([]) crashes. What is the bug?",
-        correctFix: "division by zero on empty list",
-        options: [
-          "Missing return type",
-          "Division by zero on empty list",
-          "Wrong loop variable",
-          "total should start at 1",
-        ],
+greet("Explorer")`,
+        bugDescription: "IndentationError. Fix the code.",
+        correctFix: "indentation",
+        options: ["Missing colon", "Indentation error", "Wrong string concat", "Missing return"],
       },
       4: {
         type: "logic",
         locks: [
-          {
-            id: 1,
-            question: "Result of {1, 2, 3} & {2, 3, 4} in Python?",
-            answer: "{2, 3}",
-          },
-          {
-            id: 2,
-            question: "Worst-case time complexity of merge sort?",
-            answer: "o(n log n)",
-          },
-          {
-            id: 3,
-            question: "Which stack operation removes the top element?",
-            answer: "pop",
-          },
+          { id: 1, question: "What is type([]) in Python?", answer: "list" },
+          { id: 2, question: "3 * 'ab' produces?", answer: "ababab" },
+          { id: 3, question: "bool('') is?", answer: "false" },
         ],
       },
       5: {
         type: "arrangement",
         language: "python",
-        description: "Arrange lines for iterative factorial.",
+        description: "Arrange lines for a correct factorial function.",
         correctLines: [
           "def factorial(n):",
-          "    if n < 0:",
-          "        raise ValueError('n must be >= 0')",
-          "    result = 1",
-          "    for i in range(2, n + 1):",
-          "        result *= i",
-          "    return result",
+          "    if n <= 1:",
+          "        return 1",
+          "    return n * factorial(n - 1)",
         ],
       },
       6: {
         type: "memory",
         language: "python",
-        code: `s = "abracadabra"
-print(s.count("a"), s.find("cad"), s[::-1][:3])`,
-        output: "5 4 arb",
+        code: `d = {"a": 1, "b": 2}
+print(list(d.keys())[0] + str(d["b"]))`,
+        output: "a2",
       },
     },
   },
-
-  // ==================== SET 4 ====================
   {
     id: 4,
     levels: {
       1: {
         type: "riddle",
-        question:
-          "I map keys to values in average O(1). Too many collisions and I slow down badly. What am I?",
-        answer: "hash table",
+        question: "I hold a single value and my type is determined at runtime in Python. Who am I?",
+        answer: "variable",
       },
       2: {
         type: "output",
         language: "java",
-        code: `public class Main {
-  public static void main(String[] args) {
-    System.out.println(5 + 3 + "2" + 1 + 1);
-  }
-}`,
-        answer: "8211",
+        code: `String s = "Code";
+s = s + "Quest";
+System.out.println(s.length());`,
+        answer: "9",
       },
       3: {
         type: "detective",
         language: "java",
-        code: `String s = null;
-if (s.equals("test")) {
-  System.out.println("match");
+        code: `public class Test {
+  public static void main(String[] args) {
+    int a = 10;
+    int b = 0;
+    System.out.println(a / b);
+  }
 }`,
-        bugDescription: "This throws NullPointerException. What is wrong?",
-        correctFix: "calling method on null reference",
-        options: [
-          "Missing semicolon",
-          "Calling method on null reference",
-          "Wrong string comparison operator",
-          "Variable not declared",
-        ],
+        bugDescription: "Runtime exception. Identify the issue.",
+        correctFix: "division by zero",
+        options: ["Division by zero", "Null pointer", "Class not found", "Stack overflow"],
       },
       4: {
         type: "logic",
         locks: [
-          {
-            id: 1,
-            question: "Java interface methods are _____ by default (classic style).",
-            answer: "abstract",
-          },
-          {
-            id: 2,
-            question: "Keyword that prevents a class from being extended?",
-            answer: "final",
-          },
-          {
-            id: 3,
-            question: "Size of int in Java (bits)?",
-            answer: "32",
-          },
+          { id: 1, question: "Java: System.out.println(5 + 3 + \"2\"); prints?", answer: "82" },
+          { id: 2, question: "Is '==' and '.equals()' the same for Strings?", answer: "no" },
+          { id: 3, question: "What keyword prevents inheritance?", answer: "final" },
         ],
       },
       5: {
         type: "arrangement",
         language: "java",
-        description: "Arrange lines to check if a number is prime.",
+        description: "Arrange to check if a number is prime.",
         correctLines: [
           "public static boolean isPrime(int n) {",
           "    if (n <= 1) return false;",
-          "    if (n <= 3) return true;",
-          "    if (n % 2 == 0 || n % 3 == 0) return false;",
-          "    for (int i = 5; i * i <= n; i += 6) {",
-          "        if (n % i == 0 || n % (i + 2) == 0) return false;",
+          "    for (int i = 2; i * i <= n; i++) {",
+          "        if (n % i == 0) return false;",
           "    }",
           "    return true;",
           "}",
@@ -395,201 +306,131 @@ if (s.equals("test")) {
       6: {
         type: "memory",
         language: "java",
-        code: `int[] a = {1, 2, 3};
-int sum = 0;
-for (int v : a) sum += v * v;
-System.out.println(sum);`,
-        output: "14",
+        code: `int[] arr = {3, 1, 4, 1, 5};
+int max = arr[0];
+for(int n : arr) if(n > max) max = n;
+System.out.println(max);`,
+        output: "5",
       },
     },
   },
-
-  // ==================== SET 5 ====================
   {
     id: 5,
     levels: {
       1: {
         type: "riddle",
-        question:
-          "I explore a graph level by level using a queue and a visited set. What algorithm am I?",
-        answer: "bfs",
+        question: "I am a special method that initializes an object. Who am I in Java?",
+        answer: "constructor",
       },
       2: {
         type: "output",
         language: "python",
-        code: `def wrap(fn):
-    def inner(x):
-        return fn(x) + 1
-    return inner
-
-@wrap
-def double(x):
-    return x * 2
-
-print(double(3))`,
-        answer: "7",
+        code: `print([i**2 for i in range(4) if i % 2 == 0])`,
+        answer: "[0, 4]",
       },
       3: {
         type: "detective",
         language: "python",
-        code: `d = {"a": 1, "b": 2}
-for k in d:
-    if k == "a":
-        del d[k]
-print(d)`,
-        bugDescription: "This raises RuntimeError. What is the bug?",
-        correctFix: "deleting dict key while iterating",
-        options: [
-          "Key 'a' does not exist",
-          "Deleting dict key while iterating",
-          "print cannot print dict",
-          "Wrong comparison operator",
-        ],
+        code: `nums = [1, 2, 3]
+print(nums[3])`,
+        bugDescription: "IndexError. What is wrong?",
+        correctFix: "index out of range",
+        options: ["Index out of range", "Type error", "Syntax error", "Name error"],
       },
       4: {
         type: "logic",
         locks: [
-          {
-            id: 1,
-            question: "Output of sorted({3, 1, 2})?",
-            answer: "[1, 2, 3]",
-          },
-          {
-            id: 2,
-            question: "Tree traversal: root, then left, then right?",
-            answer: "preorder",
-          },
-          {
-            id: 3,
-            question: "Average recursive space of quicksort?",
-            answer: "o(log n)",
-          },
+          { id: 1, question: "Python: 7 // 2 equals?", answer: "3" },
+          { id: 2, question: "What does 'in' operator check?", answer: "membership" },
+          { id: 3, question: "type(None) is?", answer: "nonetype" },
         ],
       },
       5: {
         type: "arrangement",
         language: "python",
-        description: "Arrange lines for DFS on an adjacency-list graph.",
+        description: "Arrange for binary search (assuming sorted list).",
         correctLines: [
-          "def dfs(graph, start, visited=None):",
-          "    if visited is None:",
-          "        visited = set()",
-          "    visited.add(start)",
-          "    for neighbor in graph.get(start, []):",
-          "        if neighbor not in visited:",
-          "            dfs(graph, neighbor, visited)",
-          "    return visited",
+          "def binary_search(arr, target):",
+          "    low, high = 0, len(arr) - 1",
+          "    while low <= high:",
+          "        mid = (low + high) // 2",
+          "        if arr[mid] == target:",
+          "            return mid",
+          "        elif arr[mid] < target:",
+          "            low = mid + 1",
+          "        else:",
+          "            high = mid - 1",
+          "    return -1",
         ],
       },
       6: {
         type: "memory",
         language: "python",
-        code: `from functools import reduce
-nums = [1, 2, 3, 4]
-print(reduce(lambda a, b: a * b, nums, 1))`,
-        output: "24",
+        code: `s = "quest"
+print(s[::-1].upper())`,
+        output: "TSEUQ",
       },
     },
   },
-
-// ==================== SET 6 ====================
-{
-  id: 6,
-  levels: {
-    1: {
-      type: "riddle",
-      question:
-        "I store key-value pairs, and every key must be unique. In Java, what collection am I?",
-      answer: "hashmap",
-    },
-
-    2: {
-      type: "output",
-      language: "java",
-      code: `public class Main {
-  public static void main(String[] args) {
-    int x = 3;
-    int y = 4;
-    System.out.println(x * y + x);
-  }
-}`,
-      answer: "15",
-    },
-
-    3: {
-      type: "detective",
-      language: "java",
-      code: `public class Main {
-  public static void main(String[] args) {
-    String name = null;
-    System.out.println(name.length());
-  }
-}`,
-      bugDescription:
-        "The program throws a NullPointerException. What is the bug?",
-      correctFix: "calling length() on a null reference",
-      options: [
-        "String is too long",
-        "Calling length() on a null reference",
-        "length() is not a Java method",
-        "String must be static",
-      ],
-    },
-
-    4: {
-      type: "logic",
-      locks: [
-        {
-          id: 1,
-          question: "Which data structure follows FIFO order?",
-          answer: "queue",
-        },
-        {
-          id: 2,
-          question: "What keyword is used to inherit a class in Java?",
-          answer: "extends",
-        },
-        {
-          id: 3,
-          question:
-            "What is the time complexity of accessing an element by index in an array?",
-          answer: "o(1)",
-        },
-      ],
-    },
-
-    5: {
-      type: "arrangement",
-      language: "java",
-      description:
-        "Arrange the lines to create a Java method that finds the maximum value in an integer array.",
-      correctLines: [
-        "[
-    "public static int binarySearch(int[] arr, int target) {",
-    "    int left = 0; int right = arr.length - 1;",
-    "    while (left <= right) {",
-    "        int mid = left + (right - left) / 2;",
-    "        if (arr[mid] == target) { return mid; }",
-    "        if (arr[mid] < target) { left = mid + 1; }",
-    "        else { right = mid - 1; }",
-    "    } return -1; }",
-  ],
-
-    },
-
-    6: {
-      type: "memory",
-      language: "java",
-      code: `int[] nums = {4, 7, 2, 9};
-int sum = 0;
-for (int n : nums) {
-  if (n > 4) sum += n;
-}
-System.out.println(sum);`,
-      output: "16",
+  {
+    id: 6,
+    levels: {
+      1: {
+        type: "riddle",
+        question: "I allow a class to inherit properties from another class. Who am I?",
+        answer: "inheritance",
+      },
+      2: {
+        type: "output",
+        language: "java",
+        code: `int i = 0;
+do {
+  i++;
+} while(i < 3);
+System.out.println(i);`,
+        answer: "3",
+      },
+      3: {
+        type: "detective",
+        language: "java",
+        code: `String str = null;
+System.out.println(str.length());`,
+        bugDescription: "NullPointerException. Identify cause.",
+        correctFix: "null reference",
+        options: ["Null reference", "Out of memory", "Class cast", "Illegal argument"],
+      },
+      4: {
+        type: "logic",
+        locks: [
+          { id: 1, question: "Java default value of boolean?", answer: "false" },
+          { id: 2, question: "Which loop is guaranteed to run at least once?", answer: "do while" },
+          { id: 3, question: "What is the size of int in Java (bits)?", answer: "32" },
+        ],
+      },
+      5: {
+        type: "arrangement",
+        language: "java",
+        description: "Arrange to calculate sum of unique elements.",
+        correctLines: [
+          "public static int uniqueSum(int[] arr) {",
+          "    java.util.Set<Integer> set = new java.util.HashSet<>();",
+          "    for(int n : arr) set.add(n);",
+          "    int sum = 0;",
+          "    for(int n : set) sum += n;",
+          "    return sum;",
+          "}",
+        ],
+      },
+      6: {
+        type: "memory",
+        language: "java",
+        code: `String msg = "CODE";
+msg = msg.toLowerCase();
+System.out.println(msg.charAt(0) + "" + msg.length());`,
+        output: "c4",
+      },
     },
   },
-},
 ];
 
 export function getRandomSetId(): number {
