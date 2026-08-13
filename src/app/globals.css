@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&...');
-
 :root {
   --bg-deep: #05070f;
   --bg-mid: #0a0e1a;
