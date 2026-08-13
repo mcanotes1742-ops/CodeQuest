@@ -492,96 +492,103 @@ print(reduce(lambda a, b: a * b, nums, 1))`,
     },
   },
 
-  // ==================== SET 6 ====================
-  {
-    id: 6,
-    levels: {
-      1: {
-        type: "riddle",
-        question:
-          "I find a cycle in a linked list with two pointers moving at different speeds. What algorithm am I?",
-        answer: "floyd cycle",
-      },
-      2: {
-        type: "output",
-        language: "java",
-        code: `public class Main {
-  static int mystery(int n) {
-    if (n <= 1) return n;
-    return mystery(n - 1) + mystery(n - 2);
-  }
+// ==================== SET 6 ====================
+{
+  id: 6,
+  levels: {
+    1: {
+      type: "riddle",
+      question:
+        "I store key-value pairs, and every key must be unique. In Java, what collection am I?",
+      answer: "hashmap",
+    },
+
+    2: {
+      type: "output",
+      language: "java",
+      code: `public class Main {
   public static void main(String[] args) {
-    System.out.println(mystery(5));
+    int x = 3;
+    int y = 4;
+    System.out.println(x * y + x);
   }
 }`,
-        answer: "5",
-      },
-      3: {
-        type: "detective",
-        language: "java",
-        code: `class Counter {
-  private static int count = 0;
-  public void inc() { count++; }
-  public int get() { return count; }
+      answer: "15",
+    },
+
+    3: {
+      type: "detective",
+      language: "java",
+      code: `public class Main {
+  public static void main(String[] args) {
+    String name = null;
+    System.out.println(name.length());
+  }
+}`,
+      bugDescription:
+        "The program throws a NullPointerException. What is the bug?",
+      correctFix: "calling length() on a null reference",
+      options: [
+        "String is too long",
+        "Calling length() on a null reference",
+        "length() is not a Java method",
+        "String must be static",
+      ],
+    },
+
+    4: {
+      type: "logic",
+      locks: [
+        {
+          id: 1,
+          question: "Which data structure follows FIFO order?",
+          answer: "queue",
+        },
+        {
+          id: 2,
+          question: "What keyword is used to inherit a class in Java?",
+          answer: "extends",
+        },
+        {
+          id: 3,
+          question:
+            "What is the time complexity of accessing an element by index in an array?",
+          answer: "o(1)",
+        },
+      ],
+    },
+
+    5: {
+      type: "arrangement",
+      language: "java",
+      description:
+        "Arrange the lines to create a Java method that finds the maximum value in an integer array.",
+      correctLines: [
+        "public static int findMax(int[] arr) {",
+        "    int max = arr[0];",
+        "    for (int i = 1; i < arr.length; i++) {",
+        "        if (arr[i] > max) {",
+        "            max = arr[i];",
+        "        }",
+        "    }",
+        "    return max;",
+        "}",
+      ],
+    },
+
+    6: {
+      type: "memory",
+      language: "java",
+      code: `int[] nums = {4, 7, 2, 9};
+int sum = 0;
+for (int n : nums) {
+  if (n > 4) sum += n;
 }
-// Two threads each call inc() 1000 times on the SAME Counter.`,
-        bugDescription: "Final count is often less than 2000. What is the concurrency bug?",
-        correctFix: "race condition without synchronization",
-        options: [
-          "Integer overflow",
-          "Race condition without synchronization",
-          "Static method missing",
-          "Wrong return type",
-        ],
-      },
-      4: {
-        type: "logic",
-        locks: [
-          {
-            id: 1,
-            question: "Which data structure is LIFO?",
-            answer: "stack",
-          },
-          {
-            id: 2,
-            question: "Dijkstra needs edge weights to be _____?",
-            answer: "non-negative",
-          },
-          {
-            id: 3,
-            question: "Big-O of binary search on a sorted array?",
-            answer: "o(log n)",
-          },
-        ],
-      },
-      5: {
-        type: "arrangement",
-        language: "java",
-        description: "Arrange lines for iterative Fibonacci (nth value).",
-        correctLines: [
-          "public static long fib(int n) {",
-          "    if (n < 0) throw new IllegalArgumentException();",
-          "    if (n <= 1) return n;",
-          "    long a = 0, b = 1;",
-          "    for (int i = 2; i <= n; i++) {",
-          "        long next = a + b;",
-          "        a = b;",
-          "        b = next;",
-          "    }",
-          "    return b;",
-          "}",
-        ],
-      },
-      6: {
-        type: "memory",
-        language: "java",
-        code: `String msg = "KEY404";
-msg = msg.substring(3).toLowerCase();
-System.out.println(msg.charAt(0) + "" + msg.length());`,
-        output: "43",
-      },
+System.out.println(sum);`,
+      output: "16",
     },
   },
+},
 ];
 
 export function getRandomSetId(): number {
