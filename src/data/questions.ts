@@ -564,16 +564,17 @@ print(reduce(lambda a, b: a * b, nums, 1))`,
       description:
         "Arrange the lines to create a Java method that finds the maximum value in an integer array.",
       correctLines: [
-        "public static int findMax(int[] arr) {",
-        "    int max = arr[0];",
-        "    for (int i = 1; i < arr.length; i++) {",
-        "        if (arr[i] > max) {",
-        "            max = arr[i];",
-        "        }",
-        "    }",
-        "    return max;",
-        "}",
-      ],
+        "[
+    "public static int binarySearch(int[] arr, int target) {",
+    "    int left = 0; int right = arr.length - 1;",
+    "    while (left <= right) {",
+    "        int mid = left + (right - left) / 2;",
+    "        if (arr[mid] == target) { return mid; }",
+    "        if (arr[mid] < target) { left = mid + 1; }",
+    "        else { right = mid - 1; }",
+    "    } return -1; }",
+  ],
+
     },
 
     6: {
